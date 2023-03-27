@@ -59,10 +59,10 @@ int mic_tcp_accept(int socket, mic_tcp_sock_addr* addr)
     PDU_SYN_ACK.header.dest_port=addr->port; //Port destination
     
     
-    int res= IP_send(PDU_SYN_ACK,mic_tcp_sock_addr);
-    if res==-1  return -1; //Problème lors de l'envoie du PDU
+    int res= IP_send(PDU_SYN_ACK,addr);
+    if (res==-1)  return -1; //Problème lors de l'envoie du PDU
     
-    mic_tcp_sock_addr* addr_rcv;
+    mic_tcp_sock_addr* addr_rcv = malloc(sizeof(mic_tcp_sock_addr));
     
     int value = IP_recv(PDU_ACK,addr_rcv,1);
     if(value != -1) {
@@ -92,7 +92,7 @@ int mic_tcp_connect(int socket, mic_tcp_sock_addr addr)
     PDU_SYN.header.dest_port=addr.port;
     
     
-    int res = IP_send(PDU_SYN,mic_tcp_sock_addr);
+    int res = IP_send(PDU_SYN,addr);
     if(res==-1) return -1; //Erreur lors de l'envoie du PDU
     sock[socket].state = SYN_SENT;
     
@@ -173,6 +173,7 @@ int mic_tcp_recv (int socket, char* mesg, int max_mesg_size)
 int mic_tcp_close (int socket)
 {
     printf("[MIC-TCP] Appel de la fonction :  "); printf(__FUNCTION__); printf("\n");
+		sock[socket].state = CLOSED;
     return -1;
 }
 
