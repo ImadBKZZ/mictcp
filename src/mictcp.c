@@ -17,8 +17,8 @@ int mic_tcp_socket(start_mode sm)
    if(result == -1) return -1; //Erreur initialisation
    
    //Initialisation d'un nouveau socket
-   sock[0].fd = num_sock;
-   sock[0].state = IDLE;
+   sock[num_sock].fd = num_sock;
+   sock[num_sock].state = IDLE;
    num_sock++;
    
    set_loss_rate(0);
