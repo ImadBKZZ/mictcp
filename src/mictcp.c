@@ -8,6 +8,8 @@
  
 mic_tcp_sock sock[10];
 int num_sock = 0;
+int num_seq = 0;
+int num_ack = 0;
  
 int mic_tcp_socket(start_mode sm)
 {
@@ -21,7 +23,7 @@ int mic_tcp_socket(start_mode sm)
    sock[num_sock].state = IDLE;
    num_sock++;
    
-   set_loss_rate(0);
+   set_loss_rate(30);
 
    return num_sock-1;
 }
@@ -77,7 +79,7 @@ int mic_tcp_accept(int socket, mic_tcp_sock_addr* addr)
     while(sock[socket].state != ESTABLISHED) {
 			sleep(0.1);
 		}
-		printf("ACK reçu\n");
+		//printf("ACK reçu\n");
 		/*printf("On va recevoir le ACK\n");
     printf("test pdu_ack : %d \n",PDU_ACK->header.ack);
     if(value != -1) {
@@ -115,17 +117,17 @@ int mic_tcp_connect(int socket, mic_tcp_sock_addr addr)
     
     
     int res = IP_send(PDU_SYN,addr);
-		printf("On a fait IP_SEND \n");
+		//printf("On a fait IP_SEND \n");
     if(res==-1) return -1; //Erreur lors de l'envoie du PDU
     sock[socket].state = SYN_SENT;
     
     mic_tcp_sock_addr* addr_rcv = malloc(sizeof(mic_tcp_sock_addr));
     
     int value = IP_recv(PDU_SYN_ACK,addr_rcv,1);
-    printf("On a fait IP_recv \n");
+    //printf("On a fait IP_recv \n");
     if(value != -1) {
         if(PDU_SYN_ACK->header.syn == 1 && PDU_SYN_ACK->header.ack == 1) {
-            printf("connection établie \n"); //On a reçu un SYN-ACK
+            //printf("connection établie \n"); //On a reçu un SYN-ACK
             
 						PDU_ACK.header.ack = 1;
 						PDU_ACK.header.syn = 0;
@@ -133,10 +135,10 @@ int mic_tcp_connect(int socket, mic_tcp_sock_addr addr)
 						PDU_ACK.header.dest_port=addr.port;
 						PDU_ACK.payload.data = malloc(sizeof(char));
 	  				PDU_ACK.payload.size = sizeof(char);
-						printf("On va envoyer le ACK\n");
+						//printf("On va envoyer le ACK\n");
 						
-						int res = IP_send(PDU_ACK,addr);
-						printf("apres IPsend de ACK\n");
+						res = IP_send(PDU_ACK,addr);
+						//printf("apres IPsend de ACK\n");
     				if(res==-1) return -1; //Erreur lors de l'envoie du PDU
 
 						return 0;
@@ -162,7 +164,7 @@ int mic_tcp_send (int mic_sock, char* mesg, int mesg_size)
     PDU_ACK->payload.size = sizeof(char);
     mic_tcp_sock_addr addr;
 
-		addr.port= 10000;
+		addr.port= 1234;
     
     //Paramétrage du PDU de la donnée envoyé
     PDU_MSG.header.source_port=sock[mic_sock].addr.port; 
@@ -172,25 +174,43 @@ int mic_tcp_send (int mic_sock, char* mesg, int mesg_size)
 		PDU_MSG.header.ack = 0;
 		PDU_MSG.header.syn = 0;
 		PDU_MSG.header.fin = 0;
+    PDU_MSG.header.seq_num = num_seq;
+
+		//PDU_MSG.header.ack_num = 0;
     
     //Envoie de la donnée
-    int res = IP_send(PDU_MSG,addr);
-    printf("apres send PDU_MSG \n");
+    int res; //= IP_send(PDU_MSG,addr);
+    //printf("apres send PDU_MSG \n");
     if (res==-1) return -1; //erreur lors de la transmission
     
     mic_tcp_sock_addr* addr_rcv = malloc(sizeof(mic_tcp_sock_addr));
     
-    int value = IP_recv(PDU_ACK,addr_rcv,1);
-    printf("apres recv PDU_ACK \n");
-    if(value != -1) {
-        if(PDU_ACK->header.ack == 1) {
-            printf("Bonne reception de la donnée envoyée \n"); //On a reçu un ACK
+    int value; //= IP_recv(PDU_ACK,addr_rcv,100);
+		printf("HH Message pas reçu, renvoie du PDU n°ack reçu : value : %d  ack reçu : %d, ack : %d, h_ack : %d\n",value, PDU_ACK->header.ack_num, num_ack, PDU_ACK->header.ack);
+    //printf("apres recv PDU_ACKa \n");
+    do {
+			
+			res = IP_send(PDU_MSG,addr);
+			if (res==-1) return -1; //erreur lors de la transmission
+			value = IP_recv(PDU_ACK,addr_rcv,100);
+			//sleep(0.2);
+			
+			/*if ((value == -1  || PDU_ACK->header.ack_num!=num_ack || PDU_ACK->header.ack != 1) == 0) {
+				break;
+			}*/
+        /*if(PDU_ACK->header.ack == 1) {
+            //printf("Bonne reception de la donnée envoyée \n"); //On a reçu un ACK
             return 0;
-        }
-    }
+        }*/
+			printf("Message pas reçu, renvoie du PDU n°ack reçu : value : %d  ack reçu : %d, ack : %d, h_ack : %d\n",value, PDU_ACK->header.ack_num, num_ack, PDU_ACK->header.ack);
+    } while(value == -1  || PDU_ACK->header.ack_num!=num_ack && PDU_ACK->header.ack != 1)
+    num_seq = num_seq+1;
+		printf("-------------------------------------------------numero sequence : %d\n",num_seq);
+		num_ack +=1;
+		// exp_num_ack; nxt_num_ack = ;
 
     
-    return -1;
+    return 0;
 }
 
 /*
@@ -234,8 +254,12 @@ int mic_tcp_close (int socket)
  */
 void process_received_PDU(mic_tcp_pdu pdu, mic_tcp_sock_addr addr)
 {
-    printf("[MIC-TCP] Appel de la fonction: "); printf(__FUNCTION__); printf("\n");
-		printf("Reception d'un PDU : SYN = %d; ACK = %d\n",pdu.header.syn,pdu.header.ack);
+    //printf("[MIC-TCP] Appel de la fonction: "); printf(__FUNCTION__); printf("\n");
+		//printf("Reception d'un PDU : SYN = %d; ACK = %d\n",pdu.header.syn,pdu.header.ack);
+		printf("mon num socket %d \n", addr.port);
+		printf("num socket entrant %d\n", pdu.header.source_port);
+		
+		printf("SYN : %d ACK : %d FIN : %d NUM_SEQ : %d EXC_NUM_SEQ : %d\n",pdu.header.syn,pdu.header.ack,pdu.header.fin, pdu.header.seq_num, num_seq);
 		if(pdu.header.syn == 1) {
 			sock[0].state = SYN_RECEIVED;
 		}
@@ -244,10 +268,42 @@ void process_received_PDU(mic_tcp_pdu pdu, mic_tcp_sock_addr addr)
 			sock[0].state = ESTABLISHED;
 		}
 	
-		if(pdu.header.syn == 0 && pdu.header.ack ==0 && pdu.header.fin == 0) {
-			printf("La data reçu par process est %s\n",pdu.payload.data);
+		if(pdu.header.syn == 0 && pdu.header.ack ==0 && pdu.header.fin == 0 && pdu.header.seq_num == num_seq) {
+			num_seq = num_seq+1;
+			printf("-------------------------------------------------numero sequence : %d\n",num_seq);
+			//printf("La data reçu par process est %s\n",pdu.payload.data);
     	app_buffer_put(pdu.payload);
+			
+
+      struct mic_tcp_pdu PDU_ACK;
+			//sleep(1);
+      PDU_ACK.header.ack = 1;
+      PDU_ACK.header.syn = 0;
+      PDU_ACK.header.source_port = pdu.header.dest_port;
+      PDU_ACK.header.dest_port=addr.port;
+      PDU_ACK.payload.data = malloc(sizeof(char));
+      PDU_ACK.payload.size = sizeof(char);
+			PDU_ACK.header.ack_num =num_ack;
+      num_ack += 1;
+      printf("on va envoyer ack\n");
+      int res = IP_send(PDU_ACK,addr);
+			
+      printf("ack envoye res : %d\n\n\n\n", res);
+
 		}
 
+		if(pdu.header.seq_num != num_seq) {
+			DU_ACK.header.ack = 1;
+      PDU_ACK.header.syn = 0;
+      PDU_ACK.header.source_port = pdu.header.dest_port;
+      PDU_ACK.header.dest_port=addr.port;
+      PDU_ACK.payload.data = malloc(sizeof(char));
+      PDU_ACK.payload.size = sizeof(char);
+			PDU_ACK.header.ack_num =num_seq;
+      printf("on va envoyer ack\n");
+      int res = IP_send(PDU_ACK,addr);
+		}
+
+		
 	
 }
