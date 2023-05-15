@@ -293,25 +293,26 @@ int mic_tcp_close (int socket)
  */
 void process_received_PDU(mic_tcp_pdu pdu, mic_tcp_sock_addr addr)
 {
+   //Réception du PDU SYN (connection entrante)
    if(pdu.header.syn == 1) {
 	sock[0].state = SYN_RECEIVED;
 	rec_admissible_loss_rate = *pdu.payload.data;
 	printf("J'ai reçu le loss rate : %d\n",rec_admissible_loss_rate);
    }
 
+   //Réception du PDU ACK (acquittement)
    if(pdu.header.ack == 1 && pdu.header.syn != 1) {
    	sock[0].state = ESTABLISHED;
    }
-	
+
+   //Reception d'un message, numéro de séquence correct : envoie d'un PDU d'acquittement
    if(pdu.header.syn == 0 && pdu.header.ack ==0 && pdu.header.fin == 0 && pdu.header.seq_num == num_seq) {
 	num_seq = num_seq+1;
 	printf("-------------------------------------------------numero sequence---------------------------------------------- : %d\n",num_seq);
 	app_buffer_put(pdu.payload);
 			
 	struct mic_tcp_pdu PDU_ACK;
-
-
-		//Envoie acquitement du message
+       //Envoie acquitement du message
       	PDU_ACK.header.ack = 1;
       	PDU_ACK.header.syn = 0;
       	PDU_ACK.header.source_port = pdu.header.dest_port;
@@ -320,11 +321,11 @@ void process_received_PDU(mic_tcp_pdu pdu, mic_tcp_sock_addr addr)
       	PDU_ACK.payload.size = sizeof(char);
 	PDU_ACK.header.ack_num =num_ack;
       	num_ack += 1;
-      	printf("on va envoyer ack\n");
+      	//printf("on va envoyer ack\n");
       	int res = IP_send(PDU_ACK,addr);
 
    }
-    //Renvoie Acquitement du message en cas de perte
+    //Renvoie Acquitement du message en cas de perte (numéro de séquence désynchronisé)
    else if(pdu.header.seq_num != num_seq && pdu.header.syn == 0 && pdu.header.ack ==0 && pdu.header.fin == 0) {
       	struct mic_tcp_pdu PDU_ACK;
       	printf("-------------------------------------------------numero sequence---------------------------------------------- : %d\n",num_seq);
