@@ -1,87 +1,32 @@
 # BE RESEAU
 ## TPs BE Reseau - 3 MIC - RAPPORT
-### Eliot REVOL            Imad
+### Eliot REVOL        	Imad BOUKEZZATA
 
 
 
 
-## Contenu du dépôt 
-Vous trouverez dans ce dépot la version 4.1 du BE réseaux.
+## Contenu du dépôt
+Vous trouverez dans ce dépôt la version 4.1 du BE réseaux.
 Sont implémentés :
-	- 
+MICTCP incluant une phase de transfert de données sans garantie de fiabilité
+étendu de la phase de transfert de données MICTCP-v1  de sorte à inclure une garantie de fiabilité totale via un mécanisme de reprise des pertes de type « Stop and  Wait »
+garantie de fiabilité partielle « statique » via un mécanisme de reprise des pertes de type « Stop and Wait » à fiabilité partielle « pré câblée », i.e. dont le % de pertes admissibles est défini de façon statique
+une phase d’établissement de connexion
+une garantie de fiabilité partielle via un mécanisme de reprise des pertes de type « Stop and Wait » dont le % de pertes admissibles sera négocié durant la phase d’établissement de connexion
 
 
-## Création du dépôt mictcp 
+## Explications du code
 
-1. Création d’un compte git étudiant : Si vous ne disposez pas d’un compte git, connectez vous sur http://github.com/ et créez un compte par binôme. 
-
-2. Afin d’être capable de mettre à jour le code que vous aurez produit sur le dépôt central Github, il vous faudra créer un jeton d’accès qui jouera le rôle de mot de passe. Veuillez le sauvegarder, car il vous le sera demandé lors de l'accès au dépôt central. Pour ce faire, veuillez suivre les étapes décrites : https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token
-
-3. Création d’un dépôt Etudiant sur GitHub pour le BE Reseau
-  
-   Créer une copie du dépôt template enseignant : https://github.com/rezo-insat/mictcp, en vous y rendant et en cliquant sur le bouton « use this template » situé dans le coin en haut, plutôt à droite de la page. Il est demandé de le choisir comme dépôt privé. Il est impératif pour les corrections que vous rajoutiez le compte : rezo-insat comme collaborateur afin de permettre à vos enseignants d'accéder à votre dépôt. Pour ce faire, sélectionner le bouton "settings" puis "collaborators" et rajouter comme utilisateur : rezo-insat. La marche à suivre est décrite ci-après : https://docs.github.com/en/organizations/managing-access-to-your-organizations-repositories/adding-outside-collaborators-to-repositories-in-your-organization
+V1: Implémentation de la fonction mic_tcp_send ainsi que toutes les primitive mic_tcp_socket et mic_tcp_bind, ainsi que l’implémentation de la fonction mic_tcp-recv sans envoie d'acquittement et sans traitement de pertes ,afin d’obtenir une phase de transfert sans garantie de fiabilité.
 
 
-4. Créer un clone local de votre dépôt Github, i.e. une copie locale du dépôt sur votre compte insa. 
-  
-    cliquer sur le bouton « code » de votre dépôt, copier l’URL qui permet de l’identifier. 
-	Ouvrir un terminal de votre machine. En vous plaçant dans le répertoire de travail de votre choix, taper depuis le terminal :
+V2: Ajout d’un mécanisme de reprise de pertes  “Stop & Wait”, avec l’implémentation de numéro de série pour les messages envoyer ainsi que les les acquittements reçu via les variables num_ack et num_seq , qui sont incrémentés à chaque envoie , et vérifié afin de garantir une phase de transfert avec garantie de fiabilité.
 
-        git clone <url de votre dépôt>
+V3: Ajout d’un pourcentage de perte admissible (loss rate) : on accepte avec un certain pourcentage de chance qu’il y est une erreur sans chercher à la corriger. Cela se fait lors de l’envoie (mic_tcp_send) : si on a pas reçu d’acquittement, on choisi un nombre au hasard entre 1 et 100 et si celui-ci est plus grand que le loss rate on renvoie le pdu, sinon on saute cette donnée et on la considère comme une perte admissible.
 
-    Vous avez désormais une copie locale de votre dépôt, que vous pouvez mettre à jour et modifier à volonté au gré de votre avancement sur les TPs. 
-
-5. Afin de nous permettre d’avoir accès à votre dépôt, merci de bien vouloir renseigner l'URL de votre dépôt sur le fichier accessible depuis le lien "fichier URLs dépôts étudiants" se trouvant sur moodle (au niveau de la section: BE Reseau).
-
-## Compilation du protocole mictcp et lancement des applications de test fournies
-
-Pour compiler mictcp et générer les exécutables des applications de test depuis le code source fourni, taper :
-
-    make
-
-Deux applicatoins de test sont fournies, tsock_texte et tsock_video, elles peuvent être lancées soit en mode puits, soit en mode source selon la syntaxe suivante:
-
-    Usage: ./tsock_texte [-p|-s]
-    Usage: ./tsock_video [[-p|-s] [-t (tcp|mictcp)]
-
-Seul tsock_video permet d'utiliser, au choix, votre protocole mictcp ou une émulation du comportement de tcp sur un réseau avec pertes.
-
-## Suivi de versions de votre travail
-
-Vous pouvez travailler comme vous le souhaitez sur le contenu du répertoire local. Vous pouvez mettre à jour les fichiers existants, rajouter d’autres ainsi que des dossiers et en retirer certains à votre guise. 
-
-Pour répercuter les changements que vous faites sur votre répertoire de travail local sur le dépôt central GitHub, sur votre terminal, taper :
- 
-    git add .
-    git commit -m «un message décrivant la mise à jour»
-    git push
-
-- Marquage des versions successives de votre travail sur mictcp 
- 
-Lorsque vous le souhaitez, git permet d'associer une étiquette à un état précis de votre dépôt par l'intermédiaires de tags. Il vous est par exemple possible d'utiliser ce mécanisme pour marquer (et par conséquence pouvoir retrouver) l'état de votre dépôt pour chacune des versions successives de votre travail sur mictcp.
-
-Pour Créer un tag « v1 » et l'associer à l'état courrant de votre dépôt, vous taperez la commande suivante sur votre terminal :
-
-    git tag v1
-
-Pour lister les tags existants au sein de votre dépôt
-
-    git tag -l
-
-Pour transférer les tags de votre dépôt local vers le dépôt central sur github:
-
-    git push origin --tags
+V4.1: Ajout de la phase d’établissement de connexion via un échange SYN / SYN-ACK / ACK entre le client et le serveur. Les pertes de paquets sont pris en compte lors de la phase d’établissement de connexion, le seul problème est lorsque le client reçoit le SYN–ACK mais le serveur ne reçoit pas le ACK final : dans ce cas, le serveur passe dans un processus d’attente au cas où le client n’aurait pas reçu le SYN-ACK et qu’il recevait de nouveau le SYN. Sinon, il est admis après un certain temps que le SYN-ACK a bien été reçu et que la connexion peut donc être établie : on a pas reçu à gérer le renvoie du ACK par le client en cas d’erreur d’envoie autrement. Ajout de la négociation du loss rate entre le client et le serveur : le serveur a un maximum prédéfini et le client a une loss rate défini au départ qu’il envoie via le pdu SYN, le serveur va ensuite choisir son loss rate ou celui du client en fonction de s’il respecte ses contraintes. Finalement, le pourcentage de pertes admissibles définitif est renvoyé au client via le PDU SYN-ACK qu’il confirme via le PDU ACK.
 
 
-Ceci permettra à votre enseignant de positionner le dépôt dans l'état ou il était au moment du marquage avec chacun des tags que vous définissez. 
-   
-## Suivi de votre avancement 
+## Exécution du code
 
-Veuillez utiliser, à minima, un tag pour chacune des versions successives de mictcp qui sont définies au sein du sujet du BE disponible sous moodle.
-
-
-## Liens utiles 
-
-Aide pour la création d’un dépôt depuis un template : https://docs.github.com/en/repositories/creating-and-managing-repositories/creating-a-repository-from-a-template
-
-Manuel d'utilisation de git: https://git-scm.com/docs
+Le code s'exécute classiquement en faisait ./tsock_texte -p pour le puits et ./tsock_texte -s pour la source, de même ./tsock_video -p -t mictcp pour le puits et -s pour la vidéo
