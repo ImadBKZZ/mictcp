@@ -1,17 +1,14 @@
 # BE RESEAU
 ## TPs BE Reseau - 3 MIC - RAPPORT
-### Eliot REVOL 	Imad
+### Eliot REVOL            Imad
 
 
 
 
-## Contenu du dépôt « template » fourni
-Ce dépôt inclut le code source initial fourni pour démarrer le BE. Plus précisément : 
-  - README.md (ce fichier) qui notamment décrit la préparation de l’environnement de travail et le suivi des versions de votre travail; 
-  - tsock_texte et tsock_video : lanceurs pour les applications de test fournies. 
-  - dossier include : contenant les définitions des éléments fournis que vous aurez à manipuler dans le cadre du BE.
-  - dossier src : contenant l'implantation des éléments fournis et à compléter dans le cadre du BE.
-  - src/mictcp.c : fichier au sein duquel vous serez amenés à faire l'ensemble de vos contributions (hors bonus éventuels). 
+## Contenu du dépôt 
+Vous trouverez dans ce dépot la version 4.1 du BE réseaux.
+Sont implémentés :
+	- 
 
 
 ## Création du dépôt mictcp 
