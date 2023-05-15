@@ -1,7 +1,8 @@
 # BE RESEAU
-## TPs BE Reseau - 3 MIC
+## TPs BE Reseau - 3 MIC - RAPPORT
+# Eliot REVOL Imad
 
-Les détails du sujet du BE est accessible depuis le cours "Programmation Système et Réseau" sur moodle.
+
 
 
 ## Contenu du dépôt « template » fourni
